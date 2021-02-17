@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for thumbnail
+
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  ThumbnailFunction:
+    Type: AWS::Serverless::Function 
+    Properties:
+      CodeUri: thumbnail-lambda/
+      Handler: app.handler
+      Runtime: nodejs14.x
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket:
+              Ref: SourceImageBucket    
+            Events: s3:ObjectCreated:*
+      Policies:
+        - S3ReadPolicy:
+            BucketName: !Sub 'source-image-bucket-${AWS::AccountId}'
+        - S3WritePolicy:
+            BucketName: !Sub 'source-image-bucket-${AWS::AccountId}-resized'
+    Metadata:
+      BuildMethod: makefile
+
+
+  SourceImageBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub 'source-image-bucket-${AWS::AccountId}'
+
+
+  ResizedImageBucket:
+    Type: 'AWS::S3::Bucket'
+    Properties:
+      BucketName: !Sub 'source-image-bucket-${AWS::AccountId}-resized'
+
+
+Outputs:
+  SourceImageBucket:
+    Description: "Source Bucket"
+    Value: !GetAtt SourceImageBucket.Arn
+  ResizedImageBucket:
+    Description: "Resized Bucket"
+    Value: !GetAtt ResizedImageBucket.Arn
+  ThumbnailFunction:
+    Description: "Hello World Lambda Function ARN"
+    Value: !GetAtt ThumbnailFunction.Arn
+  ThumbnailFunctionIamRole:
+    Description: "Implicit IAM Role created for Hello World function"
+    Value: !GetAtt ThumbnailFunctionRole.Arn
